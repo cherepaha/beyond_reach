@@ -19,7 +19,7 @@ class WalkingExpDA:
         self.initialize_log(exp_info)
 
     def initialize_log(self, exp_info):
-        log_path = 'D:/data/beyond_the_reach/%s'
+        log_path = 'C:/Users/Arkady/Google Drive/data/beyond_the_reach/%s'
         
         if not os.path.exists(log_path % 'choices'):
             os.makedirs(log_path % 'choices')

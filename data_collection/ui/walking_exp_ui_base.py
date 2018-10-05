@@ -72,10 +72,16 @@ class WalkingExpUIBase(object):
         response_dynamics_log = []     
         
         trial_start_time = core.getTime()
-        print(str(self.get_position()) + ": in deadzone? " + str(self.is_in_deadzone(self.get_position())))
-        while self.is_in_deadzone(self.get_position()):
+
+        # in some kinect trials subjects disappear from the field of view before they get to
+        # the deadzone, which means the first sampled position from kinect is outside of deadzone
+        # even if the subject is in the deadzone
+        # to avoid this, in the beginning of each trial the position is set to 0 before the loop
+        position = (0, 0)
+        while self.is_in_deadzone(position):
+            position = self.get_position()
             self.flip_screens()
-            print(str(self.get_position()) + ": in deadzone? " + str(self.is_in_deadzone(self.get_position())))
+            print(str(position[:2]) + ": in deadzone? " + str(self.is_in_deadzone(position)))
         
         while response is None:           
             self.draw_choices()
@@ -87,7 +93,7 @@ class WalkingExpUIBase(object):
                                            list(['%.4f' % value for value in position])))
             
             response = self.get_response()
-            print(position)
+            print(position[:2])
             print(response)
    
         print(response, self.is_ss_left)
