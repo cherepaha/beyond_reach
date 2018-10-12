@@ -15,7 +15,7 @@ class WalkingExpUIWalking(WalkingExpUIBase):
         self.kinect.skeleton_frame_ready += self.update_positions
         
         self.position = [np.nan, np.nan]
-        self.deadzone  = ((-1, 1), (0, 1.2))
+        self.deadzone  = ((-1, 1), (-0.1, 1.2))
                                        
         self.main_text_height = 0.3
         self.text_h_offset = 0.0
