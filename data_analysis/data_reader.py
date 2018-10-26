@@ -17,7 +17,7 @@ class DataReader():
 
         dynamics = dynamics.rename(columns={'timestamp': 't'})
 
-        self.preprocess_data(choices,dynamics)
+        choices, dynamics = self.preprocess_data(choices,dynamics)
 
         return choices, dynamics
 
@@ -90,6 +90,17 @@ class DataReader():
         neg_vy = np.argwhere(traj.vy < 0)
         return np.nan if len(neg_vy) == 0 else neg_vy[0][0]
 
+    # def get_slowdown(self, traj):
+    #     slowdown = np.argwhere(traj.vy < 0.2)
+    #
+    #     if(np.median(slowdown)< len(traj) - 30):
+    #         slow = 1
+    #     else:
+    #         slow = np.nan
+    #
+    #     return slow
+
+
     def get_outside_screen_limit(traj):
         return
 
@@ -101,7 +112,15 @@ class DataReader():
 
         choices['first_backwards'] = dynamics.groupby(by=self.index).apply(self.get_first_neg_vy)
         # choices['first_backwards'].hist(bins=20)
-        dynamics = dynamics[dynamics.vy >= 0]
+
+        #detect first slowdown
+        dynamics.reset_index(drop=False, inplace=True)
+        dynamics.set_index(['subj_id', 'trial_no'], inplace=True, drop=True)
+
+        # choices['slowdown'] = dynamics.groupby(by=self.index).apply(self.get_slowdown)
+
+        dynamics.reset_index(drop=False, inplace=True)
+        dynamics.set_index(self.index, inplace=True, drop=True)
 
         dynamics = dynamics.groupby(by=self.index).apply(self.resample_trajectory)
         dynamics.index = dynamics.index.droplevel(3)
