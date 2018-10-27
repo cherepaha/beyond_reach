@@ -30,6 +30,7 @@ def merge_dynamics(name, dir_path):
 
 
 dir_path = '../data/'
+#dir_path = 'C:/Users/Arkady/Google Drive/data/beyond_the_reach'
 
 merge_choices('choices', dir_path)
 merge_dynamics('dynamics', dir_path)

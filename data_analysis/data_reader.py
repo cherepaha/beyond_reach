@@ -131,6 +131,8 @@ class DataReader():
 
         choices = choices.join(dynamics.groupby(by=self.index).apply(self.get_maxd))
         choices['RT'] = dynamics.groupby(by=self.index).apply(lambda traj: traj.t.max())
+        
+        choices['is_staircase'] = choices['is_staircase'].astype('bool')
 
         choices['ss_chosen'] = ((choices['is_ss_on_left']) == (choices.response == 'left'))
         choices['choice'] = 'SS'

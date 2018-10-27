@@ -1,7 +1,6 @@
 import data_reader
 import numpy as np
-
-
+import pandas as pd
 
 def get_indifference_point_staircase(choices,delay):
     if len(choices[~choices.ss_chosen])==0:
@@ -29,30 +28,30 @@ def get_delta_staircase(choices_sc):
                                         labels=[1, 2, 3, 4])
     return choices_sc
 
-
-
-
-
 def get_k(indiff_points):
-
     delays = indiff_points.index.get_level_values('ll_delay').values
     delays = delays/max(delays)
     values = indiff_points.values
+    
+    # This calculates k-value based on AUC under original discounting curve
     k = 1 - ((delays[1:] - delays[:-1]) * (values[:-1] + values[1:]) / 2)
+    
+    # We might as well check AUC under the discounting curve with log-scaled delay
 
     return k.sum()
 
 
+#data_path = '../data/'
+data_path = 'C:/Users/Arkady/Google Drive/data/beyond_the_reach'
 
 dr = data_reader.DataReader()
-choices, dynamics = dr.read_data('../data/')
-
-
+choices, dynamics = dr.read_data(data_path)
 
 index = ['subj_id', 'task', 'trial_no']
 
 choices.reset_index(drop=False, inplace=True)
 
+# TODO: current RT 
 #exclude based on RT:
 choices = choices[((choices.RT > 1) & (choices.RT < 5 )& (choices.task =='mouse' )) | ((choices.RT > 2) & (choices.RT < 7 )& (choices.task =='walking'))]
 choices.set_index(index, inplace=True, drop=True)
