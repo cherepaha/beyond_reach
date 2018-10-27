@@ -77,6 +77,7 @@ class WalkingExpUIBase(object):
         # the deadzone, which means the first sampled position from kinect is outside of deadzone
         # even if the subject is in the deadzone
         # to avoid this, in the beginning of each trial the position is set to 0 before the loop
+
         position = (0, 0)
         while self.is_in_deadzone(position):
             position = self.get_position()
@@ -132,7 +133,8 @@ class WalkingExpUIBase(object):
         
     def is_in_deadzone(self, position):       
         # if nan or is in actual deadzone, return True
-        if ((np.isnan(position[0]) | np.isnan(position[1])) |
+        if (((position[0]==0) & (position[1]==0)) |
+            (np.isnan(position[0]) | np.isnan(position[1])) |
             ((position[0] > self.deadzone[0][0]) & (position[0] < self.deadzone[0][1]) &
             (position[1] > self.deadzone[1][0]) & (position[1] < self.deadzone[1][1]))):
             return True
