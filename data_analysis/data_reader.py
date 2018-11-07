@@ -147,6 +147,7 @@ class DataReader():
         choices['amount_diff'] = choices['ll_amount'] - choices['ss_amount']
         choices['amount_increase'] = (choices['ll_amount'] - choices['ss_amount']) / choices['ss_amount']
         choices['LL_advantage'] = choices['amount_diff'] / choices['ll_delay']
+        choices['Lambda'] = np.log(choices['LL_advantage'])
         #        choices['type'] = 'MCQ'
         #        choices.loc[choices.is_staircase, 'type'] = 'Staircase'
         choices.drop(['is_ss_on_left', 'response', 'start_time'], axis=1, inplace=True)
