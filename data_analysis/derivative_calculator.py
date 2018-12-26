@@ -13,7 +13,7 @@ class DerivativeCalculator:
         for col_name, der_name in names.items():
             dynamics[der_name] = np.concatenate(
                     [self.get_diff(traj['timestamp'].values, traj[col_name].values) 
-                            for traj_id, traj in dynamics.groupby(level=self.index, group_keys=False)]
+                            for traj_id, traj in dynamics.groupby(by=self.index, group_keys=False)]
                     )
         return dynamics
     
@@ -24,11 +24,11 @@ class DerivativeCalculator:
         for col_name, der_name in names.items():
             dynamics[der_name] = np.concatenate(
                     [self.differentiate(traj['t'].values, traj[col_name].values)
-                            for traj_id, traj in dynamics.groupby(level=self.index, group_keys=False)]
+                            for traj_id, traj in dynamics.groupby(by=self.index, group_keys=False)]
                     )
         dynamics['ax'] = np.concatenate(
                 [self.differentiate_2(traj['t'].values, traj['x'].values)
-                        for traj_id, traj in dynamics.groupby(level=self.index, group_keys=False)]
+                        for traj_id, traj in dynamics.groupby(by=self.index, group_keys=False)]
                 )
         return dynamics
     

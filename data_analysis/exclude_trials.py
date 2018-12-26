@@ -34,11 +34,11 @@ def get_k(indiff_points):
     values = indiff_points.values
     
     # This calculates k-value based on AUC under original discounting curve
-    k = 1 - ((delays[1:] - delays[:-1]) * (values[:-1] + values[1:]) / 2)
+    k = 1 - ((delays[1:] - delays[:-1]) * (values[:-1] + values[1:]) / 2).sum()
     
     # We might as well check AUC under the discounting curve with log-scaled delay
 
-    return k.sum()
+    return k
 
 
 #data_path = '../data/'
