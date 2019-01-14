@@ -16,7 +16,7 @@ class DataReader():
         as a column and as an index is not very pythonic, but is justified here IMO. Because of this, 
         pandas throws tons of warnings here and there, but those can be ignored so far.        
         '''
-        
+
         file_path = os.path.join(path, '%s.txt')
 
         choices = pd.read_csv(file_path % 'choices', sep='\t')
@@ -28,35 +28,32 @@ class DataReader():
 
         return choices, dynamics
 
-    def preprocess_data(self, choices, dynamics):
-        # dynamics = self.transform_xy(dynamics)
+    def detect_backward_movement(self, choices, dynamics):
+        choices['first_backwards'] = dynamics.groupby(by=self.index).apply(self.get_first_neg_vy)
+        return choices
 
-        dc = derivative_calculator.DerivativeCalculator()
-        # AZ: commenting out the next line to speed up preprocessing for now
-#        dynamics = dc.append_derivatives(dynamics)
+    def detect_first_slowdown(self, choices, dynamics):
 
-#        choices['first_backwards'] = dynamics.groupby(by=self.index).apply(self.get_first_neg_vy)
-        # choices['first_backwards'].hist(bins=20)
+        dynamics.reset_index(drop=False, inplace=True)
+        dynamics.set_index(['subj_id', 'trial_no'], inplace=True, drop=True)
+        choices['slowdown'] = dynamics.groupby(by=self.index).apply(self.get_slowdown)
 
-        #detect first slowdown
-#        dynamics.reset_index(drop=False, inplace=True)
-#        dynamics.set_index(['subj_id', 'trial_no'], inplace=True, drop=True)
+        return choices
 
-        # choices['slowdown'] = dynamics.groupby(by=self.index).apply(self.get_slowdown)
+    def shift_timeframe(self, dynamics):
+        # shift time to the timeframe beginning at 0 for each trajectory
+        # also, express time in seconds rather than milliseconds
+        dynamics.loc[:, 'timestamp'] = dynamics.timestamp.groupby(by=self.index). \
+                                           transform(lambda t: (t - t.min())) / 1000.0
+        return dynamics
 
-#        dynamics.reset_index(drop=False, inplace=True)
-#        dynamics.set_index(self.index, inplace=True, drop=True)
+    def apply_trajectory_resampling(self, dynamics):
+        dynamics = dynamics.groupby(by=self.index).apply(self.resample_trajectory)
+        return dynamics
 
-#        dynamics = dynamics.groupby(by=self.index).apply(self.resample_trajectory)
-#        dynamics.index = dynamics.index.droplevel(3)
-        # dynamics.reset_index(drop=False, inplace=True)
-        # del dynamics['level_3']
-        # dynamics.set_index(self.index, inplace=True, drop=True)
+    def add_basic_measures(self, choices):
 
-
-        choices = choices.join(dynamics.groupby(by=self.index).apply(self.get_maxd), on=self.index)
-        choices['RT'] = dynamics.groupby(by=self.index).apply(lambda traj: traj.t.max()-traj.t.min())
-        
+        # This method adds measures that aren't necessarily *affected* by any pre-processing steps.
         choices['is_staircase'] = choices['is_staircase'].astype('bool')
 
         choices['ss_chosen'] = ((choices['is_ss_on_left']) == (choices.response == 'left'))
@@ -73,24 +70,32 @@ class DataReader():
         choices['amount_increase'] = (choices['ll_amount'] - choices['ss_amount']) / choices['ss_amount']
         choices['LL_advantage'] = choices['amount_diff'] / choices['ll_delay']
         choices['Lambda'] = np.log(choices['LL_advantage'])
-        #        choices['type'] = 'MCQ'
-        #        choices.loc[choices.is_staircase, 'type'] = 'Staircase'
+        # choices['type'] = 'MCQ'
+        # choices.loc[choices.is_staircase, 'type'] = 'Staircase'
+
         choices.drop(['is_ss_on_left', 'response', 'start_time'], axis=1, inplace=True)
 
+        return choices
+
+    def get_RT(self, choices, dynamics):
+
+        choices = choices.join(dynamics.groupby(by=self.index).apply(self.get_maxd), on=self.index)
+        choices['RT'] = dynamics.groupby(by=self.index).apply(lambda traj: traj.t.max() - traj.t.min())
+
         # TODO: z-scoring should work within task (walking/mouse)
-#        choices['max_d_z'] = (choices['max_d'] - choices['max_d'].mean()) / choices['max_d'].std()
+        #        choices['max_d_z'] = (choices['max_d'] - choices['max_d'].mean()) / choices['max_d'].std()
 
-#        choices.reset_index(drop=False, inplace=True)
-#        choices.set_index(self.index, inplace=True, drop=True)
+        #        choices.reset_index(drop=False, inplace=True)
+        #        choices.set_index(self.index, inplace=True, drop=True)
 
-        return choices, dynamics
-    
-    def get_maxd(self, trajectory):        
+        return choices
+
+    def get_maxd(self, trajectory):
         alpha = np.arctan((trajectory.y.iloc[-1] - trajectory.y.iloc[0]) / \
                           (trajectory.x.iloc[-1] - trajectory.x.iloc[0]))
         d = (trajectory.x.values - trajectory.x.values[0]) * np.sin(-alpha) + \
             (trajectory.y.values - trajectory.y.values[0]) * np.cos(-alpha)
-        
+
         if np.isnan(d).all():
             return pd.Series({'max_d': np.nan, 'idx_max_d': np.nan})
         elif abs(np.nanmin(d)) > abs(np.nanmax(d)):
@@ -130,6 +135,48 @@ class DataReader():
     #
     #     return slow
 
-
     def get_outside_screen_limit(traj):
         return
+
+    def rotate_trajectory(self, trajectory, alpha):
+        trajectory.x = trajectory.x * np.cos(alpha) - trajectory.y * np.sin(alpha)
+        trajectory.y = trajectory.x * np.sin(alpha) + trajectory.y * np.cos(alpha)
+        return trajectory
+
+    def transform_xy(self, dynamics):
+        # first, extract average of the left and right shoulder markers data
+        # also, we rotate the reference frame so that x is "horizontal" motion (between the options)
+        # and y is "vertical" (towards/away from the options)
+        # dynamics['x'] = -(dynamics['y_left'] + dynamics['y_right']) / 2.0
+        # dynamics['y'] = (dynamics['x_left'] + dynamics['x_right']) / 2.0
+        # dynamics.drop(['x_left', 'y_left', 'z_left', 'x_right', 'y_right', 'z_right'],
+        #               axis=1, inplace=True)
+        #
+        # # second, correct camera calibration error: rotate every subject's trajectories
+        # # so that the locations of the response areas are symmetric
+        # end_points = dynamics.groupby(by=self.index).last()
+        # mean_end_points_pos = end_points[end_points.x > 0].groupby('subj_id').mean()
+        # mean_end_points_neg = end_points[end_points.x < 0].groupby('subj_id').mean()
+        # dynamics = dynamics.reset_index(drop=True)
+        # for subj_id in dynamics.subj_id.unique():
+        #     alpha = np.arctan((mean_end_points_neg.loc[subj_id].y - mean_end_points_pos.loc[subj_id].y) / \
+        #                       (mean_end_points_pos.loc[subj_id].x - mean_end_points_neg.loc[subj_id].x))
+        #     rotate = lambda traj: self.rotate_trajectory(traj, alpha)
+        #     dynamics[dynamics.subj_id == subj_id] = \
+        #         dynamics[dynamics.subj_id == subj_id].groupby('trial_no').apply(rotate)
+        #
+        # dynamics = dynamics.set_index(keys=self.index)
+
+        # third, shift every trajectory so that on average they all start at (0,0)
+        starting_points = dynamics.groupby(by=self.index).first()
+        dynamics.x = dynamics.x - starting_points.mean(axis=0).x
+        dynamics.y = dynamics.y - starting_points.mean(axis=0).y
+
+        return dynamics
+
+    def apply_trajectory_resampling(self, dynamics):
+        dynamics = dynamics.groupby(by=self.index).apply(self.resample_trajectory)
+        dynamics.reset_index(drop=False, inplace=True)
+        del dynamics['level_3']
+        dynamics.set_index(self.index, inplace=True, drop=True)
+        return dynamics
