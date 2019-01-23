@@ -122,7 +122,7 @@ class HelperFunctions():
         ncols = min(5, len(subjects))
         nrows = int(np.ceil(len(subjects)/5))
         f, axes = plt.subplots(ncols=ncols, nrows=nrows, sharex=True, sharey=True, 
-                               squeeze=True, figsize=(13, 4*nrows))
+                               squeeze=True, figsize=(13, 3.5*nrows))
         for i, subj_id in enumerate(subjects):
             ax = axes.flatten()[i]
             self.plot_trajectories(dynamics[dynamics.option_chosen == 'ss'].loc[subj_id], 
@@ -132,7 +132,7 @@ class HelperFunctions():
             ax.set_title(subj_id)
         
         for ax in axes.flatten():
-            ax.set_aspect('equal', adjustable='box')
+            ax.set_aspect('equal', adjustable='datalim')
     
         f.tight_layout()
         f.show()                                    
