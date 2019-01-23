@@ -125,9 +125,14 @@ class HelperFunctions():
                                squeeze=True, figsize=(13, 4*nrows))
         for i, subj_id in enumerate(subjects):
             ax = axes.flatten()[i]
-            self.plot_trajectories(dynamics[dynamics.option_chosen == 'ss'].loc[subj_id], color='C0', ax=ax)
-            self.plot_trajectories(dynamics[dynamics.option_chosen == 'll'].loc[subj_id], color='C1', ax=ax)
+            self.plot_trajectories(dynamics[dynamics.option_chosen == 'ss'].loc[subj_id], 
+                                   color='C0', ax=ax)
+            self.plot_trajectories(dynamics[dynamics.option_chosen == 'll'].loc[subj_id], 
+                                   color='C1', ax=ax)
             ax.set_title(subj_id)
+        
+        for ax in axes.flatten():
+            ax.set_aspect('equal', adjustable='box')
     
         f.tight_layout()
         f.show()                                    
