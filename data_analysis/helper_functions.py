@@ -132,7 +132,9 @@ class HelperFunctions():
             ax.set_title(subj_id)
         
         for ax in axes.flatten():
-            ax.set_aspect('equal', adjustable='datalim')
+#            ax.set_aspect('equal', adjustable='datalim')
+            ax.set_aspect('equal', adjustable='box')
+#            ax.set_aspect('equal')
     
         f.tight_layout()
         f.show()                                    
