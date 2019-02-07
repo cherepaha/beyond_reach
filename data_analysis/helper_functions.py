@@ -85,20 +85,22 @@ class HelperFunctions():
         return k_values, ip
     
     def get_long_k_values(self, k_values, choices):
-        k_values_long = pd.melt(k_values, id_vars=['subj_id'], value_vars=['mouse', 'walking'], value_name='k')
-        k_values_long = k_values_long.join(choices.groupby('subj_id').order.first(), on='subj_id')
-        k_values_long['task_order'] = 1
-        k_values_long.loc[(((k_values_long.task=='mouse') & (k_values_long.order=='wm')) | 
-                      ((k_values_long.task=='walking') & (k_values_long.order=='mw'))), ['task_order']] = 2
-        k_values_long = k_values_long.drop(['order'], axis=1)
-        k_values_long = k_values_long.rename(columns={'task_order':'order'})
+        k_values_long = pd.melt(k_values, id_vars=['subj_id'], value_vars=['mouse', 'walking'], 
+                                value_name='k')
+        k_values_long = k_values_long.join(choices.groupby(['subj_id', 'task']).task_number.first(), 
+                                           on=['subj_id', 'task'])
+#        k_values_long['task_order'] = 1
+#        k_values_long.loc[(((k_values_long.task=='mouse') & (k_values_long.order=='wm')) | 
+#                      ((k_values_long.task=='walking') & (k_values_long.order=='mw'))), ['task_order']] = 2
+#        k_values_long = k_values_long.drop(['order'], axis=1)
+#        k_values_long = k_values_long.rename(columns={'task_order':'order'})
         
         return k_values_long
     
     def get_ss_bias(self, data_path):
-        coeffs = pd.read_csv(os.path.join(data_path, 'mouse_max_d_coeffs.csv'), sep=',')
+        coeffs = pd.read_csv(os.path.join(data_path, 'RT_coeffs_mouse.csv'), sep=',')
         coeffs.columns = ['name', 'SS_bias']
-        coeffs = coeffs[coeffs['name'].str.contains(',choice')]
+        coeffs = coeffs[coeffs['name'].str.contains(',option_chosen')]
         coeffs['subj_id'] = coeffs.name.str.extract('(\d+)').astype(np.int64)
         coeffs = coeffs.drop('name', axis=1)
         
