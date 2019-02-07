@@ -51,8 +51,8 @@ class HelperFunctions():
                     + choices[~choices.ss_chosen].amount_ratio.max())/2
         return ip
     
-    def get_indifference_points(self, choices_sc):
-        indiff_points = (choices_sc.groupby(['subj_id', 'task', 'll_delay'])
+    def get_indifference_points(self, choices_sc, by='task'):
+        indiff_points = (choices_sc.groupby(['subj_id', by, 'll_delay'])
                          .apply(lambda c: self.get_indifference_point_staircase(c, c.iloc[0].ll_delay))
                          .rename('indiff_point'))
         return indiff_points
@@ -76,13 +76,11 @@ class HelperFunctions():
     
         return k
     
-    def get_k_values(self, choices, log=False):
-        ip = self.get_indifference_points(choices[choices.is_staircase]).reset_index()
-    
-        k_values = ip.groupby(['subj_id', 'task']).apply(lambda x: self.get_k(x, log_delay=False)).rename('k-value').unstack().reset_index()
-        k_values_log = ip.groupby(['subj_id', 'task']).apply(lambda x: self.get_k(x, log_delay=True)).rename('k-value').unstack().reset_index()
-        if log:
-            k_values = k_values_log
+    def get_k_values(self, choices, by='task', log=False):
+        ip = self.get_indifference_points(choices[choices.is_staircase], by=by).reset_index()
+        
+        k_values = (ip.groupby(['subj_id', by]).apply(lambda x: self.get_k(x, log_delay=log)).
+                        rename('k-value').unstack().reset_index())
            
         return k_values, ip
     
