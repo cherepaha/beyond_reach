@@ -87,7 +87,7 @@ class HelperFunctions():
     def get_long_k_values(self, k_values, choices):
         k_values_long = pd.melt(k_values, id_vars=['subj_id'], value_vars=['mouse', 'walking'], 
                                 value_name='k')
-        k_values_long = k_values_long.join(choices.groupby(['subj_id', 'task']).task_number.first(), 
+        k_values_long = k_values_long.join(choices.groupby(['subj_id', 'task']).order.first(), 
                                            on=['subj_id', 'task'])
 #        k_values_long['task_order'] = 1
 #        k_values_long.loc[(((k_values_long.task=='mouse') & (k_values_long.order=='wm')) | 
