@@ -87,13 +87,8 @@ class HelperFunctions():
     def get_long_k_values(self, k_values, choices):
         k_values_long = pd.melt(k_values, id_vars=['subj_id'], value_vars=['mouse', 'walking'], 
                                 value_name='k')
-        k_values_long = k_values_long.join(choices.groupby(['subj_id', 'task']).order.first(), 
+        k_values_long = k_values_long.join(choices.groupby(['subj_id', 'task']).first().loc[:, ['session', 'sequence']], 
                                            on=['subj_id', 'task'])
-#        k_values_long['task_order'] = 1
-#        k_values_long.loc[(((k_values_long.task=='mouse') & (k_values_long.order=='wm')) | 
-#                      ((k_values_long.task=='walking') & (k_values_long.order=='mw'))), ['task_order']] = 2
-#        k_values_long = k_values_long.drop(['order'], axis=1)
-#        k_values_long = k_values_long.rename(columns={'task_order':'order'})
         
         return k_values_long
     
@@ -132,9 +127,7 @@ class HelperFunctions():
             ax.set_title(subj_id)
         
         for ax in axes.flatten():
-#            ax.set_aspect('equal', adjustable='datalim')
             ax.set_aspect('equal', adjustable='box')
-#            ax.set_aspect('equal')
     
         f.tight_layout()
         f.show()                                    
