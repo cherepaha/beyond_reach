@@ -57,20 +57,15 @@ class HelperFunctions():
                          .rename('indiff_point'))
         return indiff_points
     
-    def get_k(self, indiff_points, log_delay=False):
-        '''
-        Many "raw" k-values are close to 1, and to emphasize the differences between those, we
-        might (or might not?) want to log-scale the delays before calculating k-values
-        '''
-        delays = indiff_points.ll_delay.unique()
+    def get_k(self, indiff_points, log_delay=False):        
+        # the dummy delay of 1 day is added to the actual delays to calculate AUC properly
+        delays = np.append(1, indiff_points.ll_delay.unique())
         if log_delay:
             delays = np.log(delays)
-        
         delays = delays/max(delays)        
-        values = indiff_points.indiff_point.values
-        
-        delays = np.append(0, delays)
-        values = np.append(1, values)
+
+        # relative value at the dummy delay of one is assumed to be 1      
+        values = np.append(1, indiff_points.indiff_point.values)
         
         k = 1 - ((delays[1:] - delays[:-1]) * (values[:-1] + values[1:]) / 2).sum()
     
