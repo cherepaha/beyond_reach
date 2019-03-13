@@ -22,6 +22,7 @@ def merge_dynamics(name, dir_path):
         file_path = os.path.join(subdir_path, file)
         if (file_path.endswith('.txt')):
             print(file_path)
+            # we only need the first five columns (containing subj_id, trial_no, t, x, and y)
             df = pd.read_csv(file_path, sep='\t').iloc[:, :5]
             df['task'] = 'walking' if 'walking' in file_path else 'mouse'
             dfs.append(df)
