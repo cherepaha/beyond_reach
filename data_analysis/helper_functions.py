@@ -3,9 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-class HelperFunctions():
-    index = ['subj_id', 'task', 'trial_no']
-    
+class HelperFunctions():    
     def append_derivatives(self, dynamics):
         names = {'x': 'vx',
                  'y': 'vy'}
@@ -13,7 +11,8 @@ class HelperFunctions():
         for col_name, der_name in names.items():
             dynamics[der_name] = np.concatenate(
                     [self.differentiate(traj['t'].values, traj[col_name].values)
-                            for traj_id, traj in dynamics.groupby(by=self.index, group_keys=False)]
+                            for traj_id, traj in dynamics.groupby(level=dynamics.index.names, 
+                                                                  group_keys=False)]
                     )
 
         return dynamics
