@@ -51,7 +51,7 @@ class HelperFunctions():
         return ip
     
     def get_indifference_points(self, choices_sc, by='task'):
-        indiff_points = (choices_sc.groupby(['subj_id', by, 'll_delay'])
+        indiff_points = (choices_sc.reset_index(drop=True).groupby(['subj_id', by, 'll_delay'])
                          .apply(lambda c: self.get_indifference_point_staircase(c, c.iloc[0].ll_delay))
                          .rename('indiff_point'))
         return indiff_points
